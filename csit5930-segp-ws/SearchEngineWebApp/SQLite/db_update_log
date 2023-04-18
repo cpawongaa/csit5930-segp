@@ -1,0 +1,13 @@
+[x] url
+[x] term
+[x] stem
+[x] raw_token
+[x] stem_token
+[x] max_tf
+[x] v_stem_df (view)
+[x] url_inverted
+[x] url_forward
+[x] v_stem_inverted_tile (view)
+[x] v_stem_inverted_content (view)
+[x] v_stem_forward_title (view)
+[x] v_stem_forward_content (view)

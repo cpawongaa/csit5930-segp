@@ -1,0 +1,68 @@
+
+Start [ buildUrl ] ... 
+(18.224 seconds)
+[ Done ]
+
+Start [ updateUrlInitContent ] ... 
+(52.17 seconds)
+[ Done ]
+
+Start [ normalizeRawTitle ] ... 
+(0.029 seconds)
+[ Done ]
+
+Start [ normalizeRawContent ] ... 
+(0.099 seconds)
+[ Done ]
+
+Start [ updateUrlInitStemTitle ] ... 
+(0.113 seconds)
+[ Done ]
+
+Start [ updateUrlInitStemContent ] ... 
+(7.314 seconds)
+[ Done ]
+
+Start [ buildTerm ] ... 
+[Total unique [term]: 17022]
+(0.106 seconds)
+[ Done ]
+
+Start [ buildStem ] ... 
+[Total unique [stem]: 14200]
+(0.077 seconds)
+[ Done ]
+
+Start [ buildClearTitleToken ] ... 
+(0.432 seconds)
+[ Done ]
+
+Start [ buildClearContentToken ] ... 
+(28.616 seconds)
+[ Done ]
+
+Start [ buildStemTitleToken ] ... 
+(0.324 seconds)
+[ Done ]
+
+Start [ buildStemContentToken ] ... 
+(18.669 seconds)
+[ Done ]
+
+Start [ buildTitleMaxTF ] ... 
+(0.086 seconds)
+[ Done ]
+
+Start [ buildContentMaxTF ] ... 
+(0.123 seconds)
+[ Done ]
+
+Start [ buildUrlInverted ] ... 
+(16.388 seconds)
+[ Done ]
+
+Start [ buildUrlForward ] ... 
+(0.003 seconds)
+[ Done ]
+
+[Overall Duration: 142.776 seconds]
