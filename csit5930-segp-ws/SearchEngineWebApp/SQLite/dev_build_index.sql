@@ -1,7 +1,9 @@
 -- ----------------------------------------------------------------------------------------------------
 --  Url
 -- ----------------------------------------------------------------------------------------------------
+select count(*) from url where 1=1;
 select * from url where 1=1
+and raw_title  is null
 ;
 
 select page_id || ':' || clear_content as ccontent from url;
@@ -30,7 +32,7 @@ select page_id, title, clear_title, stem_title from url where 1=1;
 --  Term
 -- ----------------------------------------------------------------------------------------------------
 
-select count(*) from term;
+select count(*) from term; -- 17022
 select * from term where 1=1
 order by term
 ;
@@ -46,7 +48,7 @@ order by 'data'
 --  Stem
 -- ----------------------------------------------------------------------------------------------------
 
-select count(*) from stem;
+select count(*) from stem; -- 14200
 select * from stem where 1=1
 --and stem_id = -1
 --and stem ='imdb'
@@ -75,7 +77,7 @@ order by 'data'
 --    type integer not null,
 --    position integer not null
 --);
-
+select count(*) from raw_token rt; -- 209581
 select * from raw_token rt where 1=1
 --and term_id=-1
 --order by
@@ -107,11 +109,13 @@ order by rt."position"
 --  Stem Token
 -- ----------------------------------------------------------------------------------------------------
 
+select count(*) from stem_token st; -- 140705
+
 select u.page_id , u.raw_title ,u.stem_content  from url u where u.page_id =1;
 
 select * from stem_token st where 1=1
 --and stem_id =-1
-and st.page_id = 1
+--and st.page_id = 1
 ;
 
 select st.page_id, st.stem_id, s.stem, st."position", st."type"  
@@ -153,6 +157,8 @@ order by st."position"
 --    primary key(page_id, type)
 )
 
+select count(*) from max_tf mt ; -- 634
+
 select page_id from url;
 
 select 
@@ -176,6 +182,7 @@ select * from max_tf mt where 1=1
 -- ----------------------------------------------------------------------------------------------------
 
 select * from url u;
+select count(*) from url_inverted ui ; -- 627
 select * from url_inverted ui ;
 
 select
@@ -191,6 +198,7 @@ and parent_page_id =18
 select * from (select distinct child_page_id from url_inverted ui order by child_page_id) a
 right join selec
 
+select count(*) from url_inverted ui ; -- 627
 
 select * 
 from url_inverted ui 

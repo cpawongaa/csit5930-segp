@@ -9,6 +9,7 @@ public class ConstantsDB {
      * Insert
      ****************************************************************************************************/
     public static final String insertUrl          = "insert into url(url) values(?);";
+    public static final String insertUrlTemp      = "insert into url_temp(url) values(?);";
     public static final String insertTerm         = "insert into term(term) values(?);";
     public static final String insertStem         = "insert into stem(stem) values(?);";
     public static final String insertRawToken     = "insert into raw_token(page_id, term_id, type, position) values(?, ?, ?, ?);";
@@ -25,7 +26,7 @@ public class ConstantsDB {
      * Update
      ****************************************************************************************************/
     public static final String updateInitiallRawContent
-    = "update url set raw_title=?, last_modified_date=?, raw_content=? where url=?;";
+    = "update url set raw_title=?, last_modified_date=?, raw_content=?, doc_length=? where url=?;";
     
     public static final String updateInitiallClearTitle
     = "update url set clear_title=? where page_id=?;";
@@ -40,22 +41,38 @@ public class ConstantsDB {
     /****************************************************************************************************
      * Delete
      ****************************************************************************************************/
+    public static final String deleteUrl_temp     = "delete from url_temp";
     
     /****************************************************************************************************
      * Select
      ****************************************************************************************************/
     public static final String selectAllUrl
     = "select * from url;";
+    public static final String selectNewUrl
+    = "select * from url_temp ut left join url u on u.url = ut.url where u.url is null;";
+    public static final String selectRemovedUrl
+    = "select * from url u left join url_temp ut on ut.url = u.url where ut.url is null;";
+    public static final String selectDeltaUrl
+    = "select * from url where doc_length is null;";
+    
     
     public static final String selectAllRawTitleWithPageId
     = "select page_id || ':' || raw_title as 'data' from url;";
+    public static final String selectDeltaRawTitleWithPageId
+    = "select page_id || ':' || raw_title as 'data', clear_title  from url where clear_title is null;";
     public static final String selectAllRawContentWithPageId
     = "select page_id || ':' || raw_content as 'data' from url;";
+    public static final String selectDeltaRawContentWithPageId
+    = "select page_id || ':' || raw_content as 'data', clear_content from url where clear_content is null;";
     
     public static final String selectAllClearTitleWithPageId
     = "select page_id || ':' || clear_title as 'data' from url;";
+    public static final String selectDeltaClearTitleWithPageId
+    = "select page_id || ':' || clear_title as 'data', stem_title from url where stem_title  is null;";
     public static final String selectAllClearContentWithPageId
     = "select page_id || ':' || clear_content as 'data' from url;";
+    public static final String selectDeltaClearContentWithPageId
+    = "select page_id || ':' || clear_content as 'data', stem_content from url where stem_content is null;";
     
     public static final String selectAllStemTitleWithPageId
     = "select page_id || ':' || stem_title as 'data' from url;";
@@ -99,9 +116,9 @@ public class ConstantsDB {
     = "select * from url where url=?;";
     
     public static final String selectTermIdByTerm
-    = "select term_id as item_id from term where term=?;";
+    = "select term_id as id from term where term=?;";
     public static final String selectStemIdByStem
-    = "select stem_id as item_id from stem where stem=?;";
+    = "select stem_id as id from stem where stem=?;";
     
     public static final String selectMaxTfByPageId
     = "select max(count) as max_tf "
@@ -149,4 +166,7 @@ public class ConstantsDB {
     
     public static final int dsTypeTitle = 1;
     public static final int dsTypeContent = 2;
+    
+    public static final String buildUpdateTypeFull = "full";
+    public static final String buildUpdateTypePartial = "partial";
 }

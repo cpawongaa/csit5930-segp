@@ -13,6 +13,7 @@ public class SearchEngine extends Base {
     private static Connection conn = null;
     private static ResultSet rs = null;
     
+    private static ArrayList<Object> data;
     private static ArrayList<Object> criteria;
     
     public static void main(String[] args) {
@@ -33,27 +34,40 @@ public class SearchEngine extends Base {
 //        getStemIdByStem("apps");
     }
     
-//    public static int getStemIdByStem(String m_stemTerm) {
-//        int stemId = -1;
-//        
-//        try {
-//            
-//            db = new DBUtil();
-//            conn = db.getConnection();
-//            criteria = new ArrayList<Object>();
-//            criteria.add(m_stemTerm);
-//            rs = db.genericSearch(conn, ConstantsDB.selectStemIdByStemTerm, criteria);
-//            if(rs.next()) {
-//                stemId = rs.getInt("StemId");
-//            }
-//            conn.close();
-//        } catch(SQLException e) {
-//            e.printStackTrace();
+    public static int getStemIdByStem(String m_stemTerm, String m_stem_term_type) {
+        
+        String query = null;
+        if(m_stem_term_type.equals(ConstantsDB.indexTypeTerm)) {
+            query = ConstantsDB.selectTermIdByTerm;
+        } else if(m_stem_term_type.equals(ConstantsDB.indexTypeStem)) {
+            query = ConstantsDB.selectStemIdByStem;
+        }
+        
+        int stemId = -1;
+        
+        try {
+            
+            db = new DBUtil();
+            conn = db.getConnection();
+            criteria = new ArrayList<Object>();
+            criteria.add(m_stemTerm);
+            
+            rs = db.genericSearch(conn, query, criteria);
+            
+            if(rs.next()) {
+                stemId = rs.getInt("id");
+            }
+            conn.close();
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        
+//        if(stemId==-1) {
+//            System.out.println("[" + m_stemTerm + "][" + m_stem_term_type + "][" + stemId + "]");
 //        }
-//        System.out.println("[stemId][" + stemId + "]");
-//        
-//        return stemId;
-//    }
+        
+        return stemId;
+    }
     
     
     
@@ -104,6 +118,34 @@ public class SearchEngine extends Base {
 //        
 //    }
     
+    public static ArrayList<String> getDeltaUrlList(boolean m_with_page_id) {
+        ArrayList<String> urlList = new ArrayList<String>();
+        
+        try {
+            
+            db = new DBUtil();
+            conn = db.getConnection();
+            rs = db.genericSearch(conn, ConstantsDB.selectDeltaUrl, null);
+            
+            while(rs.next()) {
+                String pageId = rs.getString("page_id");
+                String url = rs.getString("url");
+                if(m_with_page_id) {
+                    urlList.add(pageId+":"+url);
+                } else {
+                    urlList.add(url);
+                }
+            }
+//            ArrayUtil.printArrayList(urlList);
+            
+            conn.close();
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return urlList;
+    }
+    
     public static ArrayList<String> getFullUrlList(boolean m_with_page_id) {
         ArrayList<String> urlList = new ArrayList<String>();
         
@@ -132,28 +174,124 @@ public class SearchEngine extends Base {
         return urlList;
     }
     
-    public static ArrayList<String> getSrcWithPageId(String m_select_score) {
+    public static void fullRecraw() {
+        try {
+            // reset <url_temp> table
+            db = new DBUtil();
+            conn = db.getConnection();
+            db.genericInsertUpdateDelete(conn, ConstantsDB.deleteUrl_temp, null);
+            conn.commit();
+            
+            ArrayList<String> urls = Spider.getAllUrlList(Constants.base_url);
+            
+            for(String url: urls) {
+                data = new ArrayList<Object>();
+                data.add(url);
+                db.genericInsertUpdateDelete(conn, ConstantsDB.insertUrlTemp, data);
+            }
+            conn.commit();
+            
+            conn.close();
+            
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public static ArrayList<String> getNewUrl() {
+        ArrayList<String> urls = new ArrayList<String>();
+        
+        try {
+            db = new DBUtil();
+            conn = db.getConnection();
+            rs = db.genericSearch(conn, ConstantsDB.selectNewUrl, null);
+            while(rs.next()) {
+                String url = rs.getString("url");
+                urls.add(url);
+            }
+            conn.close();
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return urls;
+    }
+    
+    public static ArrayList<String> getRemovedUrl() {
+        ArrayList<String> urls = new ArrayList<String>();
+        
+        try {
+            db = new DBUtil();
+            conn = db.getConnection();
+            rs = db.genericSearch(conn, ConstantsDB.selectRemovedUrl, null);
+            while(rs.next()) {
+                String url = rs.getString("url");
+                urls.add(url);
+            }
+            conn.close();
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return urls;
+    }
+    
+    public static ArrayList<String> getSrcWithPageId(String m_select_score, String m_build_update_type) {
 //        printKVPair("m_select_score", m_select_score);
         ArrayList<String> list = new ArrayList<String>();
         
         String query = "";
         
         if(m_select_score.equals(ConstantsDB.scopeAllRawTitle)) {
-            query = ConstantsDB.selectAllRawTitleWithPageId;
+            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
+                query = ConstantsDB.selectAllRawTitleWithPageId;
+            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
+                query = ConstantsDB.selectDeltaRawTitleWithPageId;
+            }
         } else if(m_select_score.equals(ConstantsDB.scopeAllRawContent)) {
-            query = ConstantsDB.selectAllRawContentWithPageId;
+            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
+                query = ConstantsDB.selectAllRawContentWithPageId;
+            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
+                query = ConstantsDB.selectDeltaRawContentWithPageId;
+            }
         } else if(m_select_score.equals(ConstantsDB.scopeAllClearTitle)) {
-            query = ConstantsDB.selectAllClearTitleWithPageId;
+            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
+                query = ConstantsDB.selectAllClearTitleWithPageId;
+            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
+                query = ConstantsDB.selectDeltaClearTitleWithPageId;
+            }
         } else if(m_select_score.equals(ConstantsDB.scopeAllClearContent)) {
-            query = ConstantsDB.selectAllClearContentWithPageId;
+            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
+                query = ConstantsDB.selectAllClearContentWithPageId;
+            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
+                query = ConstantsDB.selectDeltaClearContentWithPageId;
+            }
         } else if(m_select_score.equals(ConstantsDB.scopeAllStemTitle)) {
-            query = ConstantsDB.selectAllStemTitleWithPageId;
+            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
+                query = ConstantsDB.selectAllStemTitleWithPageId;
+            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
+//                query = ConstantsDB.selectDeltaStemTitleWithPageId;
+            }
+            
         } else if(m_select_score.equals(ConstantsDB.scopeAllStemContent)) {
-            query = ConstantsDB.selectAllStemContentWithPageId;
+            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
+                query = ConstantsDB.selectAllStemContentWithPageId;
+            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
+//                query = ConstantsDB.selectDeltaStemContentWithPageId;
+            }
         } else if(m_select_score.equals(ConstantsDB.scopeAllClearTitleAndContent)) {
-            query = ConstantsDB.selectAllClearTitleAndContentWithPageId;
+            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
+                query = ConstantsDB.selectAllClearTitleAndContentWithPageId;
+            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
+//                query = ConstantsDB.selectDeltaClearTitleAndContentWithPageId;
+            }
+            
         } else if(m_select_score.equals(ConstantsDB.scopeAllStemTitleAndContent)) {
-            query = ConstantsDB.selectAllStemTitleAndContentWithPageId;
+            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
+                query = ConstantsDB.selectAllStemTitleAndContentWithPageId;
+            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
+//                query = ConstantsDB.selectDeltaStemTitleAndContentWithPageId;
+            }
         } else {
             printHelloWorld();
         }
@@ -195,7 +333,7 @@ public class SearchEngine extends Base {
             criteria.add(m_item_name);
             rs = db.genericSearch(conn, query, criteria);
             if(rs.next()) {
-                itemId = rs.getInt("item_id");
+                itemId = rs.getInt("id");
             }
             conn.close();
         } catch(SQLException e) {
@@ -248,6 +386,18 @@ public class SearchEngine extends Base {
         }
         
         return pageId;
+    }
+    
+    public static void resetUrlTemp() {
+        try {
+            db = new DBUtil();
+            conn = db.getConnection();
+            db.genericInsertUpdateDelete(conn, ConstantsDB.deleteUrl_temp, null);
+            conn.commit();
+            conn.close();
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }

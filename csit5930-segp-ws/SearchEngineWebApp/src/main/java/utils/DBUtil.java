@@ -61,7 +61,7 @@ public class DBUtil extends Base {
      * Need to call commit() to update DB afterward,
      * as this method may be called by batch inserts
      */
-    public void genericInsertUpdate(Connection m_conn, String m_insert_query, ArrayList<Object> m_data) {
+    public void genericInsertUpdateDelete(Connection m_conn, String m_insert_query, ArrayList<Object> m_data) {
 //        System.out.println("insert data: " + m_data);
         PreparedStatement pstmt = null;
         

@@ -1,17 +1,34 @@
 -- ----------------------------------------------------------------------------------------------------
 --  Test Table
 -- ----------------------------------------------------------------------------------------------------
---drop table test;
---create table test (
+drop table if exists test;
+create table test (
 --    id integer primary key autoincrement,
---    txt_1 text not null,
---    int_2 int
---);
---pragma table_info(test);
+    d_1 text,
+    d_2 text
+);
+pragma table_info(test);
+-- ----------------------------------------------------------------------------------------------------
+--  Url Temp
+-- ----------------------------------------------------------------------------------------------------
+drop table if exists url_temp;
+create table url_temp (
+    url text not null,
+    raw_title text,
+    raw_content text,
+    last_modified_date text
+);
+insert into url_temp(url)
+select url from url u order by u.page_id 
+;
+insert into url_temp(url) values('https://www.google.com/index.html');
+insert into url_temp(url) values('https://www.varmeego.com/index.html');
+delete from url_temp where url='https://www.cse.ust.hk/~kwtleung/COMP4321/testpage.htm';
+pragma table_info(url_temp);
 -- ----------------------------------------------------------------------------------------------------
 --  Url
 -- ----------------------------------------------------------------------------------------------------
-drop table url;
+drop table if exists url;
 create table url (
     page_id integer primary key autoincrement,
     url text not null,
@@ -21,13 +38,14 @@ create table url (
     raw_content text,
     clear_content text,
     stem_content text,
-    last_modified_date text
+    last_modified_date text,
+    doc_length integer
 );
 pragma table_info(url);
 -- ----------------------------------------------------------------------------------------------------
 --  Term
 -- ----------------------------------------------------------------------------------------------------
-drop table term;
+drop table if exists term;
 create table term (
     term_id integer primary key autoincrement,
     term text not null,
@@ -37,7 +55,7 @@ pragma table_info(term);
 -- ----------------------------------------------------------------------------------------------------
 --  Stem
 -- ----------------------------------------------------------------------------------------------------
-drop table stem;
+drop table if exists stem;
 create table stem (
     stem_id integer primary key autoincrement,
     stem text not null,
@@ -47,7 +65,7 @@ pragma table_info(stem);
 -- ----------------------------------------------------------------------------------------------------
 --  RawToken
 -- ----------------------------------------------------------------------------------------------------
-drop table raw_token;
+drop table if exists raw_token;
 create table raw_token (
     page_id integer not null,
     term_id integer not null,
@@ -59,7 +77,7 @@ pragma table_info(raw_token);
 -- ----------------------------------------------------------------------------------------------------
 --  StemToken
 -- ----------------------------------------------------------------------------------------------------
-drop table stem_token;
+drop table if exists stem_token;
 create table stem_token (
     page_id integer not null,
     stem_id integer not null,
@@ -71,7 +89,7 @@ pragma table_info(stem_token);
 -- ----------------------------------------------------------------------------------------------------
 --  MaxTF
 -- ----------------------------------------------------------------------------------------------------
-drop table max_tf;
+drop table if exists max_tf;
 create table max_tf (
     page_id integer not null,
     max_tf integer not null,
@@ -82,7 +100,7 @@ pragma table_info(max_tf);
 -- ----------------------------------------------------------------------------------------------------
 --  UrlInverted
 -- ----------------------------------------------------------------------------------------------------
-drop table url_inverted;
+drop table if exists url_inverted;
 create table url_inverted (
 --    url_inverted_id integer primary key autoincrement,
     parent_page_id integer not null,
@@ -93,7 +111,7 @@ pragma table_info(url_inverted);
 -- ----------------------------------------------------------------------------------------------------
 --  UrlForward
 -- ----------------------------------------------------------------------------------------------------
-drop table url_forward;
+drop table if exists url_forward;
 create table url_forward (
 --    url_forward_id integer primary key autoincrement,
     child_page_id integer not null,
@@ -104,7 +122,7 @@ pragma table_info(url_forward);
 -- ----------------------------------------------------------------------------------------------------
 --  StemInvertedTitle (Change to View)
 -- ----------------------------------------------------------------------------------------------------
-drop view v_stem_inverted_title;
+drop view if exists v_stem_inverted_title;
 create view v_stem_inverted_title
 as
 select
@@ -122,7 +140,7 @@ pragma table_info(v_stem_inverted_title);
 -- ----------------------------------------------------------------------------------------------------
 --  StemInvertedContent (Change to View)
 -- ----------------------------------------------------------------------------------------------------
-drop view v_stem_inverted_content;
+drop view if exists v_stem_inverted_content;
 create view v_stem_inverted_content
 as
 select
@@ -140,7 +158,7 @@ pragma table_info(v_stem_inverted_content);
 -- ----------------------------------------------------------------------------------------------------
 --  StemForwardTitle (Change to View)
 -- ----------------------------------------------------------------------------------------------------
-drop view v_stem_forward_title;
+drop view if exists v_stem_forward_title;
 create view v_stem_forward_title
 as
 select
@@ -156,7 +174,7 @@ pragma table_info(v_stem_forward_title);
 -- ----------------------------------------------------------------------------------------------------
 --  StemForwardContent (Change to View)
 -- ----------------------------------------------------------------------------------------------------
-drop view v_stem_forward_content;
+drop view if exists v_stem_forward_content;
 create view v_stem_forward_content
 as
 select
@@ -172,7 +190,7 @@ pragma table_info(v_stem_forward_content);
 -- ----------------------------------------------------------------------------------------------------
 --  StemPosition (replaced my v_stem_inverted_title & v_stem_inverted_content)
 -- ----------------------------------------------------------------------------------------------------
---drop table stem_position;
+--drop table if exists stem_position;
 --create table stem_position (
 --    stem_id integer not null,
 --    page_id integer not null,
@@ -184,7 +202,7 @@ pragma table_info(v_stem_forward_content);
 -- ----------------------------------------------------------------------------------------------------
 --  StemDF (Change to View)
 -- ----------------------------------------------------------------------------------------------------
-drop view v_stem_df;
+drop view if exists v_stem_df;
 create view v_stem_df
 as
 select

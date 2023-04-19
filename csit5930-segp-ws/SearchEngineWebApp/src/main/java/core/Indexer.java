@@ -18,6 +18,7 @@ import org.jsoup.nodes.Document;
 //import to.UrlTO;
 import utils.ArrayUtil;
 import utils.DBUtil;
+import utils.DateUtil;
 import utils.StopStem;
 import utils.StopWatch;
 import utils.StringUtil;
@@ -40,18 +41,35 @@ public class Indexer extends Base {
         db = new DBUtil();
     }
     
-    public void buildUrl() {
+//    private void buildUrl(String m_build_update_type) {
+//        ArrayList<String> links = null;
+//        if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
+//            links = Spider.getAllUrlList(Constants.base_url); // for init case
+//        } else {
+//            links = SearchEngine.getNewUrl(); // for new links added cases
+//        }
+//        buildUrl(links);
+//    }
+    
+    private void buildUrl(ArrayList<String> m_delta_links) {
         proc_name = "buildUrl";
         printStart(proc_name);
         timer.start();
         
+        ArrayList<String> links = new ArrayList<String>();
+        if(m_delta_links==null) {
+            links = Spider.getAllUrlList(Constants.base_url); // case: init/rebuild
+        } else {
+            links = m_delta_links;
+        }
+        
         try {
             conn = db.getConnection();
-            ArrayList<String> links = Spider.getAllUrlList(Constants.base_url);
+//            ArrayList<String> links = 
             for(String link: links) {
                 data = new ArrayList<Object>();
                 data.add(link);
-                db.genericInsertUpdate(conn, ConstantsDB.insertUrl, data);
+                db.genericInsertUpdateDelete(conn, ConstantsDB.insertUrl, data);
             }
             conn.commit();
             conn.close();
@@ -64,18 +82,30 @@ public class Indexer extends Base {
         printDone();
     }
     
-    public void updateUrlInitContent() {
+    private void updateUrlInitContent(String m_build_update_type) {
         proc_name = "updateUrlInitContent";
         printStart(proc_name);
         timer.start();
-        ArrayList<String> links = SearchEngine.getFullUrlList(false);
+        
+        ArrayList<String> links = null;
+        
+        if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
+            links = SearchEngine.getFullUrlList(false);
+        } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
+            links = SearchEngine.getDeltaUrlList(false);
+        }
+        
+//        links = SearchEngine.getFullUrlList(false);
         
         try {
             conn = db.getConnection();
             for(String link: links) {
                 URL url = new URL(link);
                 HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-                String strLastModifiedDate = new Date(httpCon.getLastModified()).toString();
+//                String strLastModifiedDate = new Date(httpCon.getLastModified()).toString();
+                Date web_date = new Date(httpCon.getLastModified());
+                String strLastModifiedDate =  DateUtil.getFormattedDate(web_date);
+                int content_length = httpCon.getContentLength();
                 
                 Document doc = Jsoup.connect(link).get();
                 String title = doc.title();
@@ -85,8 +115,9 @@ public class Indexer extends Base {
                 data.add(title);
                 data.add(strLastModifiedDate);
                 data.add(raw);
+                data.add(content_length);
                 data.add(link);
-                db.genericInsertUpdate(conn, ConstantsDB.updateInitiallRawContent, data);
+                db.genericInsertUpdateDelete(conn, ConstantsDB.updateInitiallRawContent, data);
             }
             conn.commit();
             conn.close();
@@ -101,15 +132,15 @@ public class Indexer extends Base {
         printDone();
     }
     
-    public void normalizeRawTitle() {
-        normalizeRawData(ConstantsDB.dataTypeTitle);
+    private void normalizeRawTitle(String m_build_update_type) {
+        normalizeRawData(ConstantsDB.dataTypeTitle, m_build_update_type);
     }
     
-    public void normalizeRawContent() {
-        normalizeRawData(ConstantsDB.dataTypeContent);
+    private void normalizeRawContent(String m_build_update_type) {
+        normalizeRawData(ConstantsDB.dataTypeContent, m_build_update_type);
     }
     
-    public void normalizeRawData(String m_data_type) {
+    private void normalizeRawData(String m_data_type, String m_build_update_type) {
         
         if(m_data_type.equals(ConstantsDB.dataTypeTitle)) {
             proc_name = "normalizeRawTitle";
@@ -122,9 +153,9 @@ public class Indexer extends Base {
         
         ArrayList<String> srcs = null;
         if(m_data_type.equals(ConstantsDB.dataTypeTitle)) {
-            srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllRawTitle);
+            srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllRawTitle, m_build_update_type);
         } else if(m_data_type.equals(ConstantsDB.dataTypeContent)) {
-            srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllRawContent);
+            srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllRawContent, m_build_update_type);
         }
 //        ArrayUtil.printArrayList(srcs);
         
@@ -147,7 +178,7 @@ public class Indexer extends Base {
                 } else if(m_data_type.equals(ConstantsDB.dataTypeContent)) {
                     query = ConstantsDB.updateInitiallClearContent;
                 }
-                db.genericInsertUpdate(conn, query, data);
+                db.genericInsertUpdateDelete(conn, query, data);
             }
             conn.commit();
             conn.close();
@@ -160,15 +191,15 @@ public class Indexer extends Base {
         printDone();
     }
     
-    public void updateUrlInitStemTitle() {
-        updateUrlInitStem(ConstantsDB.dataTypeTitle);
+    private void updateUrlInitStemTitle(String m_build_update_type) {
+        updateUrlInitStem(ConstantsDB.dataTypeTitle, m_build_update_type);
     }
     
-    public void updateUrlInitStemContent() {
-        updateUrlInitStem(ConstantsDB.dataTypeContent);
+    private void updateUrlInitStemContent(String m_build_update_type) {
+        updateUrlInitStem(ConstantsDB.dataTypeContent, m_build_update_type);
     }
     
-    public void updateUrlInitStem(String m_data_type) {
+    private void updateUrlInitStem(String m_data_type, String m_build_update_type) {
         
         if(m_data_type.equals(ConstantsDB.dataTypeTitle)) {
             proc_name = "updateUrlInitStemTitle";
@@ -184,9 +215,9 @@ public class Indexer extends Base {
             ArrayList<String> srcs = null;
             
             if(m_data_type.equals(ConstantsDB.dataTypeTitle)) {
-                srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitle);
+                srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitle, m_build_update_type);
             } else if(m_data_type.equals(ConstantsDB.dataTypeContent)) {
-                srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearContent);
+                srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearContent, m_build_update_type);
             }
             
             conn = db.getConnection();
@@ -222,7 +253,7 @@ public class Indexer extends Base {
                                 query = ConstantsDB.updateInitiallStemContent;
                             }
                             
-                            db.genericInsertUpdate(conn, query, data);
+                            db.genericInsertUpdateDelete(conn, query, data);
                         }
                     }
                 }
@@ -240,15 +271,15 @@ public class Indexer extends Base {
         printDone();
     }
     
-    public void buildTerm() {
-        buildTermOrStem(ConstantsDB.indexTypeTerm);
+    private void buildTerm(String m_build_udpate_type) {
+        buildTermOrStem(ConstantsDB.indexTypeTerm, m_build_udpate_type);
     }
     
-    public void buildStem() {
-        buildTermOrStem(ConstantsDB.indexTypeStem);
+    private void buildStem(String m_build_udpate_type) {
+        buildTermOrStem(ConstantsDB.indexTypeStem, m_build_udpate_type);
     }
     
-    public void buildTermOrStem(String m_term_stem) {
+    private void buildTermOrStem(String m_term_stem, String m_build_udpate_type) {
         
         if(m_term_stem.equals(ConstantsDB.indexTypeTerm)) {
             proc_name = "buildTerm";
@@ -263,10 +294,10 @@ public class Indexer extends Base {
         
         if(m_term_stem.equals(ConstantsDB.indexTypeTerm)) {
             insert_query = ConstantsDB.insertTerm;
-            source_list = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitleAndContent);
+            source_list = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitleAndContent, ConstantsDB.buildUpdateTypeFull);
         } else if(m_term_stem.equals(ConstantsDB.indexTypeStem)) {
             insert_query = ConstantsDB.insertStem;
-            source_list = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemTitleAndContent);
+            source_list = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemTitleAndContent, ConstantsDB.buildUpdateTypeFull);
         }
         
         Set<String> uniques = new LinkedHashSet<String>();
@@ -291,10 +322,24 @@ public class Indexer extends Base {
             for(String stem: uniques) {
 //                System.out.println(stem);
                 data = new ArrayList<Object>();
-                data.add(stem);
-                db.genericInsertUpdate(conn, insert_query, data);
+                
+                // check if
+                if(m_build_udpate_type.equals(ConstantsDB.buildUpdateTypePartial)) {
+                    if(SearchEngine.getStemIdByStem(stem, m_term_stem)==-1) {
+                        data.add(stem);
+                    }
+                } else {
+                    data.add(stem);
+                }
+                
+                if(data.size()>0) {
+//                    printKVPair("insert (" + m_term_stem + ")",stem);
+                    db.genericInsertUpdateDelete(conn, insert_query, data);
+                    conn.commit();
+                }
+                
             }
-            conn.commit();
+            
             conn.close();
         } catch(SQLException e) {
             e.printStackTrace();
@@ -307,19 +352,19 @@ public class Indexer extends Base {
         printDone();
     }
     
-    public void buildClearTitleToken() {
+    private void buildClearTitleToken() {
         buildToken(ConstantsDB.tokenTypeClearTitle);
     }
     
-    public void buildClearContentToken() {
+    private void buildClearContentToken() {
         buildToken(ConstantsDB.tokenTypeClearContent);
     }
     
-    public void buildStemTitleToken() {
+    private void buildStemTitleToken() {
         buildToken(ConstantsDB.tokenTypeStemTitle);
     }
     
-    public void buildStemContentToken() {
+    private void buildStemContentToken() {
         buildToken(ConstantsDB.tokenTypeStemContent);
     }
     
@@ -350,16 +395,16 @@ public class Indexer extends Base {
             ArrayList<String> idatas = null;
             
             if(m_token_type == ConstantsDB.tokenTypeClearTitle) {
-                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitle);
+                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitle, ConstantsDB.buildUpdateTypeFull);
                 insert_query = ConstantsDB.insertRawToken;
             } else if(m_token_type == ConstantsDB.tokenTypeClearContent) {
-                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearContent);
+                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearContent, ConstantsDB.buildUpdateTypeFull);
                 insert_query = ConstantsDB.insertRawToken;
             } else if(m_token_type == ConstantsDB.tokenTypeStemTitle) {
-                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemTitle);
+                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemTitle, ConstantsDB.buildUpdateTypeFull);
                 insert_query = ConstantsDB.insertStemToken;
             } else if(m_token_type == ConstantsDB.tokenTypeStemContent) {
-                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemContent);
+                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemContent, ConstantsDB.buildUpdateTypeFull);
                 insert_query = ConstantsDB.insertStemToken;
             }
             
@@ -396,7 +441,7 @@ public class Indexer extends Base {
                     data.add(pos_type);
                     data.add(pos);
                   
-                    db.genericInsertUpdate(conn, insert_query, data);
+                    db.genericInsertUpdateDelete(conn, insert_query, data);
                 }
                 conn.commit();
                 conn.close();
@@ -411,7 +456,7 @@ public class Indexer extends Base {
         printDone();
     }
     
-    public void buildUrlInverted() {
+    private void buildUrlInverted() {
         proc_name = "buildUrlInverted";
         printStart(proc_name);
         timer.start();
@@ -436,7 +481,7 @@ public class Indexer extends Base {
                     data.add(parentPageId);
                     data.add(childPageId);
                     
-                    db.genericInsertUpdate(conn, ConstantsDB.insertUrlInverted, data);
+                    db.genericInsertUpdateDelete(conn, ConstantsDB.insertUrlInverted, data);
                 }
             }
             
@@ -452,7 +497,7 @@ public class Indexer extends Base {
         printDone();
     }
     
-    public void buildUrlForward() {
+    private void buildUrlForward() {
         proc_name = "buildUrlForward";
         printStart(proc_name);
         timer.start();
@@ -460,7 +505,7 @@ public class Indexer extends Base {
         try {
             
             conn = db.getConnection();
-            db.genericInsertUpdate(conn, ConstantsDB.insertSelectUrlForward, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.insertSelectUrlForward, null);
             conn.commit();
             conn.close();
             
@@ -473,7 +518,15 @@ public class Indexer extends Base {
         printDone();
     }
     
-    public void buildMaxTF(int m_src_type) {
+    private void buildMaxTfTitle() {
+        buildMaxTf(ConstantsDB.dsTypeTitle);
+    }
+    
+    private void buildMaxTfContent() {
+        buildMaxTf(ConstantsDB.dsTypeContent);
+    }
+    
+    private void buildMaxTf(int m_src_type) {
         
         if(m_src_type == ConstantsDB.dsTypeTitle) {
             proc_name = "buildTitleMaxTF";
@@ -501,7 +554,7 @@ public class Indexer extends Base {
                 data.add(pageId);
                 data.add(maxTf);
                 data.add(m_src_type);
-                db.genericInsertUpdate(conn, ConstantsDB.insertMaxTF, data);
+                db.genericInsertUpdateDelete(conn, ConstantsDB.insertMaxTF, data);
             }
             
             conn.commit();
@@ -518,17 +571,21 @@ public class Indexer extends Base {
     
     public void reBuildAllIndexes() {
         
+        proc_name = "reBuildAllIndexes";
+        printStart(proc_name);
         timer_overall.start();
         
-        buildUrl(); // ok!~
-        updateUrlInitContent(); // ok!~
-        normalizeRawData(ConstantsDB.dataTypeTitle); // ok!~
-        normalizeRawData(ConstantsDB.dataTypeContent); // ok!~
-        updateUrlInitStemTitle(); // ok!~
-        updateUrlInitStemContent(); // ok!~
+        String buildUpdateType = ConstantsDB.buildUpdateTypeFull;
         
-        buildTerm(); // ok!~
-        buildStem(); // ok!~
+        buildUrl(null); // ok!~
+        updateUrlInitContent(buildUpdateType); // ok!~
+        normalizeRawTitle(buildUpdateType); // ok!~
+        normalizeRawContent(buildUpdateType);
+        updateUrlInitStemTitle(buildUpdateType); // ok!~
+        updateUrlInitStemContent(buildUpdateType); // ok!~
+        
+        buildTerm(buildUpdateType); // ok!~
+        buildStem(buildUpdateType); // ok!~
         
         buildClearTitleToken(); // ok!~
         buildClearContentToken(); // ok!~
@@ -536,26 +593,69 @@ public class Indexer extends Base {
         buildStemTitleToken(); // ok!~
         buildStemContentToken(); // ok!~
         
-        buildMaxTF(ConstantsDB.dsTypeTitle); // ok!~
-        buildMaxTF(ConstantsDB.dsTypeContent); // ok!~
+        buildMaxTfTitle(); // ok!~
+        buildMaxTfContent(); // ok!~
             
         buildUrlInverted(); // ok!~
         buildUrlForward(); // ok!~
         
+        timer_overall.stop();
+        timer_overall.printOverallElapseTimeInSecond();
+    }
+    
+    private void newPageAddedHandling() {
+        ArrayList<String> new_urls = SearchEngine.getNewUrl();
+//        printKVPair("new_urls.size()", new_urls.size());
+//        ArrayUtil.printArrayList(new_urls);
         
-        // Below Index Change to DB VIEW
-//        buildStemPosition();
-//        buildStemInverted();
-//        buildStemForward();
-//        buildStemDF();
+        String buildUpdateType = ConstantsDB.buildUpdateTypePartial;
+        
+//        buildUrl(new_urls); // ok!~
+//        updateUrlInitContent(buildUpdateType); // ok!~
+//        normalizeRawTitle(buildUpdateType); // ok!~
+//        normalizeRawContent(buildUpdateType); // ok!~
+//        updateUrlInitStemTitle(buildUpdateType); // ok!~
+//        updateUrlInitStemContent(buildUpdateType); // ok!~
+//        
+//        buildTerm(buildUpdateType); // ok!~
+        buildStem(buildUpdateType); // ok!~
+    }
+    
+    private void removedPageHandling() {
+        ArrayList<String> removed_urls = SearchEngine.getRemovedUrl();
+//        printKVPair("removed_urls.size()", removed_urls.size());
+//        ArrayUtil.printArrayList(removed_urls);
+        // removedPageHandling
+    }
+    
+    private void modifiedDateChangeHandling() {
+        // TODO: modifiedDateChangeHandling
+    }
+    
+    public void checkAndUpdateIndex() {
+        
+        proc_name = "checkAndUpdateIndex";
+        printStart(proc_name);
+        timer_overall.start();
+        
+//        SearchEngine.fullRecraw(); // TODO: to be open
+        
+        // Add to removed page handling
+        newPageAddedHandling();
+        removedPageHandling();
+        
+        // Modifed date change handling
+        modifiedDateChangeHandling();
         
         timer_overall.stop();
         timer_overall.printOverallElapseTimeInSecond();
     }
-
+    
     public static void main(String[] args) {
         Indexer idxr = new Indexer();
-        idxr.reBuildAllIndexes();
+        
+//        idxr.reBuildAllIndexes();
+        idxr.checkAndUpdateIndex();
         
         Toolkit.getDefaultToolkit().beep();
     }
