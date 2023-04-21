@@ -1,11 +1,16 @@
 package core;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 
 import utils.DBUtil;
+import utils.DateUtil;
 
 public class SearchEngine extends Base {
     
@@ -116,35 +121,6 @@ public class SearchEngine extends Base {
 //       
 //       return url;
 //        
-//    }
-    
-    public static ArrayList<String> getDeltaUrlList(boolean m_with_page_id) {
-        ArrayList<String> urlList = new ArrayList<String>();
-        
-        try {
-            
-            db = new DBUtil();
-            conn = db.getConnection();
-            rs = db.genericSearch(conn, ConstantsDB.selectDeltaUrl, null);
-            
-            while(rs.next()) {
-                String pageId = rs.getString("page_id");
-                String url = rs.getString("url");
-                if(m_with_page_id) {
-                    urlList.add(pageId+":"+url);
-                } else {
-                    urlList.add(url);
-                }
-            }
-//            ArrayUtil.printArrayList(urlList);
-            
-            conn.close();
-        } catch(SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return urlList;
-    }
     
     public static ArrayList<String> getFullUrlList(boolean m_with_page_id) {
         ArrayList<String> urlList = new ArrayList<String>();
@@ -185,14 +161,23 @@ public class SearchEngine extends Base {
             ArrayList<String> urls = Spider.getAllUrlList(Constants.base_url);
             
             for(String url: urls) {
+                
+                URL i_url = new URL(url);
+                HttpURLConnection httpCon = (HttpURLConnection) i_url.openConnection();
+                Date web_date = new Date(httpCon.getLastModified());
+                String strLastModifiedDate =  DateUtil.getFormattedDate(web_date);
+                
                 data = new ArrayList<Object>();
                 data.add(url);
+                data.add(strLastModifiedDate);
                 db.genericInsertUpdateDelete(conn, ConstantsDB.insertUrlTemp, data);
             }
             conn.commit();
             
             conn.close();
             
+        } catch(IOException e) {
+            e.printStackTrace();
         } catch(SQLException e) {
             e.printStackTrace();
         }
@@ -207,7 +192,7 @@ public class SearchEngine extends Base {
             rs = db.genericSearch(conn, ConstantsDB.selectNewUrl, null);
             while(rs.next()) {
                 String url = rs.getString("url");
-                urls.add(url);
+                urls.add("add|"+url+"|-|-");
             }
             conn.close();
         } catch(SQLException e) {
@@ -226,7 +211,7 @@ public class SearchEngine extends Base {
             rs = db.genericSearch(conn, ConstantsDB.selectRemovedUrl, null);
             while(rs.next()) {
                 String url = rs.getString("url");
-                urls.add(url);
+                urls.add("remove|"+url+"|-|-");
             }
             conn.close();
         } catch(SQLException e) {
@@ -236,62 +221,51 @@ public class SearchEngine extends Base {
         return urls;
     }
     
-    public static ArrayList<String> getSrcWithPageId(String m_select_score, String m_build_update_type) {
+    public static ArrayList<String> getModifiedUrl() {
+        ArrayList<String> urls = new ArrayList<String>();
+        
+        try {
+            db = new DBUtil();
+            conn = db.getConnection();
+            rs = db.genericSearch(conn, ConstantsDB.selectModifiedUrl, null);
+            while(rs.next()) {
+                String url = rs.getString("url");
+                String oldDate = rs.getString("old_date");
+                String newDate = rs.getString("new_date");
+                
+                String data = "modify"+"|"+url+"|"+oldDate+"|"+newDate;
+                urls.add(data);
+            }
+            conn.close();
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return urls;
+    }
+    
+    public static ArrayList<String> getSrcWithPageId(String m_select_score) {
 //        printKVPair("m_select_score", m_select_score);
         ArrayList<String> list = new ArrayList<String>();
         
         String query = "";
         
         if(m_select_score.equals(ConstantsDB.scopeAllRawTitle)) {
-            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
-                query = ConstantsDB.selectAllRawTitleWithPageId;
-            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
-                query = ConstantsDB.selectDeltaRawTitleWithPageId;
-            }
+            query = ConstantsDB.selectAllRawTitleWithPageId;
         } else if(m_select_score.equals(ConstantsDB.scopeAllRawContent)) {
-            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
-                query = ConstantsDB.selectAllRawContentWithPageId;
-            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
-                query = ConstantsDB.selectDeltaRawContentWithPageId;
-            }
+            query = ConstantsDB.selectAllRawContentWithPageId;
         } else if(m_select_score.equals(ConstantsDB.scopeAllClearTitle)) {
-            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
-                query = ConstantsDB.selectAllClearTitleWithPageId;
-            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
-                query = ConstantsDB.selectDeltaClearTitleWithPageId;
-            }
+            query = ConstantsDB.selectAllClearTitleWithPageId;
         } else if(m_select_score.equals(ConstantsDB.scopeAllClearContent)) {
-            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
-                query = ConstantsDB.selectAllClearContentWithPageId;
-            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
-                query = ConstantsDB.selectDeltaClearContentWithPageId;
-            }
+            query = ConstantsDB.selectAllClearContentWithPageId;
         } else if(m_select_score.equals(ConstantsDB.scopeAllStemTitle)) {
-            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
-                query = ConstantsDB.selectAllStemTitleWithPageId;
-            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
-//                query = ConstantsDB.selectDeltaStemTitleWithPageId;
-            }
-            
+            query = ConstantsDB.selectAllStemTitleWithPageId;
         } else if(m_select_score.equals(ConstantsDB.scopeAllStemContent)) {
-            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
-                query = ConstantsDB.selectAllStemContentWithPageId;
-            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
-//                query = ConstantsDB.selectDeltaStemContentWithPageId;
-            }
+            query = ConstantsDB.selectAllStemContentWithPageId;
         } else if(m_select_score.equals(ConstantsDB.scopeAllClearTitleAndContent)) {
-            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
-                query = ConstantsDB.selectAllClearTitleAndContentWithPageId;
-            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
-//                query = ConstantsDB.selectDeltaClearTitleAndContentWithPageId;
-            }
-            
+            query = ConstantsDB.selectAllClearTitleAndContentWithPageId;
         } else if(m_select_score.equals(ConstantsDB.scopeAllStemTitleAndContent)) {
-            if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
-                query = ConstantsDB.selectAllStemTitleAndContentWithPageId;
-            } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
-//                query = ConstantsDB.selectDeltaStemTitleAndContentWithPageId;
-            }
+            query = ConstantsDB.selectAllStemTitleAndContentWithPageId;
         } else {
             printHelloWorld();
         }
@@ -399,5 +373,4 @@ public class SearchEngine extends Base {
             e.printStackTrace();
         }
     }
-
 }

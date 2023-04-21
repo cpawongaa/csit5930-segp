@@ -9,7 +9,7 @@ public class ConstantsDB {
      * Insert
      ****************************************************************************************************/
     public static final String insertUrl          = "insert into url(url) values(?);";
-    public static final String insertUrlTemp      = "insert into url_temp(url) values(?);";
+    public static final String insertUrlTemp      = "insert into url_temp(url, last_modified_date) values(?, ?);";
     public static final String insertTerm         = "insert into term(term) values(?);";
     public static final String insertStem         = "insert into stem(stem) values(?);";
     public static final String insertRawToken     = "insert into raw_token(page_id, term_id, type, position) values(?, ?, ?, ?);";
@@ -21,6 +21,8 @@ public class ConstantsDB {
     public static final String insertStemForward  = "insert into stem_forward(page_id, stem_id, type) values(?, ?, ?);";
     public static final String insertStemPosition = "insert into stem_position(stem_id, page_id, type, position) values(?, ?, ?, ?);";
     public static final String insertStemDF       = "insert into stem_df(stem_id, df) values(?, ?);";
+    
+    public static final String insertHistory      = "insert into page_update_history values(?, ?, ?, ?, ?);";
     
     /****************************************************************************************************
      * Update
@@ -39,9 +41,86 @@ public class ConstantsDB {
     = "update url set stem_content=? where page_id=?;";
     
     /****************************************************************************************************
-     * Delete
+     * Delete / Drop / Create
      ****************************************************************************************************/
-    public static final String deleteUrl_temp     = "delete from url_temp";
+    public static final String deleteUrl_temp   = "delete from url_temp";
+    
+    public static final String dropUrl = "drop table if exists url;";
+    public static final String dropTerm = "drop table if exists term;";
+    public static final String dropStem = "drop table if exists stem;";
+    public static final String dropRawToken = "drop table if exists raw_token;";
+    public static final String dropStemToken = "drop table if exists stem_token;";
+    public static final String dropMaxTf = "drop table if exists max_tf;";
+    public static final String dropUrlInverted = "drop table if exists url_inverted;";
+    public static final String dropUrlForward = "drop table if exists url_forward;";
+    
+    public static final String createUrl 
+    = "create table url ("
+            + "page_id integer primary key autoincrement,"
+            + "url text not null,"
+            + "raw_title text,"
+            + "clear_title text,"
+            + "stem_title text,"
+            + "raw_content text,"
+            + "clear_content text,"
+            + "stem_content text,"
+            + "last_modified_date text,"
+            + "doc_length integer"
+            + ");";
+        
+    public static final String createTerm
+    = "create table term ("
+            + "term_id integer primary key autoincrement,"
+            + "term text not null,"
+            + "unique(Term)"
+            + ");";
+            
+    public static final String createStem
+    = "create table stem ("
+            + "stem_id integer primary key autoincrement,"
+            + "stem text not null,"
+            + "unique(stem)"
+            + ");";
+    
+    public static final String createRawToken
+    = "create table raw_token ("
+            + "page_id integer not null,"
+            + "term_id integer not null,"
+            + "type integer not null,"
+            + "position integer not null,"
+            + "primary key(page_id, term_id, type, position)"
+            + ");";
+    
+    public static final String createStemToken 
+    = "create table stem_token ("
+            + "page_id integer not null,"
+            + "stem_id integer not null,"
+            + "type integer not null,"
+            + "position integer not null,"
+            + "primary key(page_id, stem_id, type, position)"
+            + ");";
+    
+    public static final String createMaxTf 
+    = "create table max_tf ("
+            + "page_id integer not null,"
+            + "max_tf integer not null,"
+            + "type integer not null,"
+            + "primary key(page_id, type)"
+            + ");";
+    
+    public static final String createUrlInverted
+    = "create table url_inverted ("
+            + "parent_page_id integer not null,"
+            + "child_page_id integer not null,"
+            + "primary key(parent_page_id, child_page_id)"
+            + ");";
+    
+    public static final String createUrlForward
+    = "create table url_forward ("
+            + "child_page_id integer not null,"
+            + "parent_page_id integer not null,"
+            + "primary key(child_page_id, parent_page_id)"
+            + ");";
     
     /****************************************************************************************************
      * Select
@@ -52,27 +131,22 @@ public class ConstantsDB {
     = "select * from url_temp ut left join url u on u.url = ut.url where u.url is null;";
     public static final String selectRemovedUrl
     = "select * from url u left join url_temp ut on ut.url = u.url where ut.url is null;";
-    public static final String selectDeltaUrl
-    = "select * from url where doc_length is null;";
-    
+    public static final String selectModifiedUrl
+    = "select "
+            + "u.page_id, u.url, u.last_modified_date as old_date, ut.last_modified_date as new_date "
+            + "from url_temp ut "
+            + "inner join url u on u.url = ut.url "
+            + "where ut.last_modified_date > u.last_modified_date;";
     
     public static final String selectAllRawTitleWithPageId
     = "select page_id || ':' || raw_title as 'data' from url;";
-    public static final String selectDeltaRawTitleWithPageId
-    = "select page_id || ':' || raw_title as 'data', clear_title  from url where clear_title is null;";
     public static final String selectAllRawContentWithPageId
     = "select page_id || ':' || raw_content as 'data' from url;";
-    public static final String selectDeltaRawContentWithPageId
-    = "select page_id || ':' || raw_content as 'data', clear_content from url where clear_content is null;";
     
     public static final String selectAllClearTitleWithPageId
     = "select page_id || ':' || clear_title as 'data' from url;";
-    public static final String selectDeltaClearTitleWithPageId
-    = "select page_id || ':' || clear_title as 'data', stem_title from url where stem_title  is null;";
     public static final String selectAllClearContentWithPageId
     = "select page_id || ':' || clear_content as 'data' from url;";
-    public static final String selectDeltaClearContentWithPageId
-    = "select page_id || ':' || clear_content as 'data', stem_content from url where stem_content is null;";
     
     public static final String selectAllStemTitleWithPageId
     = "select page_id || ':' || stem_title as 'data' from url;";

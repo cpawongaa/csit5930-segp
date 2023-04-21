@@ -51,17 +51,12 @@ public class Indexer extends Base {
 //        buildUrl(links);
 //    }
     
-    private void buildUrl(ArrayList<String> m_delta_links) {
+    private void buildUrl() {
         proc_name = "buildUrl";
         printStart(proc_name);
         timer.start();
         
-        ArrayList<String> links = new ArrayList<String>();
-        if(m_delta_links==null) {
-            links = Spider.getAllUrlList(Constants.base_url); // case: init/rebuild
-        } else {
-            links = m_delta_links;
-        }
+        ArrayList<String> links = Spider.getAllUrlList(Constants.base_url);
         
         try {
             conn = db.getConnection();
@@ -82,20 +77,12 @@ public class Indexer extends Base {
         printDone();
     }
     
-    private void updateUrlInitContent(String m_build_update_type) {
+    private void updateUrlInitContent() {
         proc_name = "updateUrlInitContent";
         printStart(proc_name);
         timer.start();
         
-        ArrayList<String> links = null;
-        
-        if(m_build_update_type.equals(ConstantsDB.buildUpdateTypeFull)) {
-            links = SearchEngine.getFullUrlList(false);
-        } else if(m_build_update_type.equals(ConstantsDB.buildUpdateTypePartial)) {
-            links = SearchEngine.getDeltaUrlList(false);
-        }
-        
-//        links = SearchEngine.getFullUrlList(false);
+        ArrayList<String> links = SearchEngine.getFullUrlList(false);
         
         try {
             conn = db.getConnection();
@@ -132,15 +119,15 @@ public class Indexer extends Base {
         printDone();
     }
     
-    private void normalizeRawTitle(String m_build_update_type) {
-        normalizeRawData(ConstantsDB.dataTypeTitle, m_build_update_type);
+    private void normalizeRawTitle() {
+        normalizeRawData(ConstantsDB.dataTypeTitle);
     }
     
-    private void normalizeRawContent(String m_build_update_type) {
-        normalizeRawData(ConstantsDB.dataTypeContent, m_build_update_type);
+    private void normalizeRawContent() {
+        normalizeRawData(ConstantsDB.dataTypeContent);
     }
     
-    private void normalizeRawData(String m_data_type, String m_build_update_type) {
+    private void normalizeRawData(String m_data_type) {
         
         if(m_data_type.equals(ConstantsDB.dataTypeTitle)) {
             proc_name = "normalizeRawTitle";
@@ -153,9 +140,9 @@ public class Indexer extends Base {
         
         ArrayList<String> srcs = null;
         if(m_data_type.equals(ConstantsDB.dataTypeTitle)) {
-            srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllRawTitle, m_build_update_type);
+            srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllRawTitle);
         } else if(m_data_type.equals(ConstantsDB.dataTypeContent)) {
-            srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllRawContent, m_build_update_type);
+            srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllRawContent);
         }
 //        ArrayUtil.printArrayList(srcs);
         
@@ -191,15 +178,15 @@ public class Indexer extends Base {
         printDone();
     }
     
-    private void updateUrlInitStemTitle(String m_build_update_type) {
-        updateUrlInitStem(ConstantsDB.dataTypeTitle, m_build_update_type);
+    private void updateUrlInitStemTitle() {
+        updateUrlInitStem(ConstantsDB.dataTypeTitle);
     }
     
-    private void updateUrlInitStemContent(String m_build_update_type) {
-        updateUrlInitStem(ConstantsDB.dataTypeContent, m_build_update_type);
+    private void updateUrlInitStemContent() {
+        updateUrlInitStem(ConstantsDB.dataTypeContent);
     }
     
-    private void updateUrlInitStem(String m_data_type, String m_build_update_type) {
+    private void updateUrlInitStem(String m_data_type) {
         
         if(m_data_type.equals(ConstantsDB.dataTypeTitle)) {
             proc_name = "updateUrlInitStemTitle";
@@ -215,9 +202,9 @@ public class Indexer extends Base {
             ArrayList<String> srcs = null;
             
             if(m_data_type.equals(ConstantsDB.dataTypeTitle)) {
-                srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitle, m_build_update_type);
+                srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitle);
             } else if(m_data_type.equals(ConstantsDB.dataTypeContent)) {
-                srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearContent, m_build_update_type);
+                srcs = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearContent);
             }
             
             conn = db.getConnection();
@@ -271,15 +258,15 @@ public class Indexer extends Base {
         printDone();
     }
     
-    private void buildTerm(String m_build_udpate_type) {
-        buildTermOrStem(ConstantsDB.indexTypeTerm, m_build_udpate_type);
+    private void buildTerm() {
+        buildTermOrStem(ConstantsDB.indexTypeTerm);
     }
     
-    private void buildStem(String m_build_udpate_type) {
-        buildTermOrStem(ConstantsDB.indexTypeStem, m_build_udpate_type);
+    private void buildStem() {
+        buildTermOrStem(ConstantsDB.indexTypeStem);
     }
     
-    private void buildTermOrStem(String m_term_stem, String m_build_udpate_type) {
+    private void buildTermOrStem(String m_term_stem) {
         
         if(m_term_stem.equals(ConstantsDB.indexTypeTerm)) {
             proc_name = "buildTerm";
@@ -294,10 +281,10 @@ public class Indexer extends Base {
         
         if(m_term_stem.equals(ConstantsDB.indexTypeTerm)) {
             insert_query = ConstantsDB.insertTerm;
-            source_list = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitleAndContent, ConstantsDB.buildUpdateTypeFull);
+            source_list = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitleAndContent);
         } else if(m_term_stem.equals(ConstantsDB.indexTypeStem)) {
             insert_query = ConstantsDB.insertStem;
-            source_list = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemTitleAndContent, ConstantsDB.buildUpdateTypeFull);
+            source_list = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemTitleAndContent);
         }
         
         Set<String> uniques = new LinkedHashSet<String>();
@@ -318,29 +305,17 @@ public class Indexer extends Base {
                 }
             }
             
-//            ArrayUtil.countStringTermFrequency(uniqueTerms);
+//            ArrayUtil.countStringTermFrequency(uniques);
             for(String stem: uniques) {
 //                System.out.println(stem);
                 data = new ArrayList<Object>();
-                
-                // check if
-                if(m_build_udpate_type.equals(ConstantsDB.buildUpdateTypePartial)) {
-                    if(SearchEngine.getStemIdByStem(stem, m_term_stem)==-1) {
-                        data.add(stem);
-                    }
-                } else {
-                    data.add(stem);
-                }
-                
-                if(data.size()>0) {
-//                    printKVPair("insert (" + m_term_stem + ")",stem);
-                    db.genericInsertUpdateDelete(conn, insert_query, data);
-                    conn.commit();
-                }
-                
+                data.add(stem);
+                db.genericInsertUpdateDelete(conn, insert_query, data);
+                conn.commit();
             }
             
             conn.close();
+            
         } catch(SQLException e) {
             e.printStackTrace();
         }
@@ -368,8 +343,6 @@ public class Indexer extends Base {
         buildToken(ConstantsDB.tokenTypeStemContent);
     }
     
-    
-    
     private void buildToken(String m_token_type) {
         
         int pos_type = -1;
@@ -395,16 +368,16 @@ public class Indexer extends Base {
             ArrayList<String> idatas = null;
             
             if(m_token_type == ConstantsDB.tokenTypeClearTitle) {
-                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitle, ConstantsDB.buildUpdateTypeFull);
+                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearTitle);
                 insert_query = ConstantsDB.insertRawToken;
             } else if(m_token_type == ConstantsDB.tokenTypeClearContent) {
-                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearContent, ConstantsDB.buildUpdateTypeFull);
+                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllClearContent);
                 insert_query = ConstantsDB.insertRawToken;
             } else if(m_token_type == ConstantsDB.tokenTypeStemTitle) {
-                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemTitle, ConstantsDB.buildUpdateTypeFull);
+                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemTitle);
                 insert_query = ConstantsDB.insertStemToken;
             } else if(m_token_type == ConstantsDB.tokenTypeStemContent) {
-                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemContent, ConstantsDB.buildUpdateTypeFull);
+                idatas = SearchEngine.getSrcWithPageId(ConstantsDB.scopeAllStemContent);
                 insert_query = ConstantsDB.insertStemToken;
             }
             
@@ -575,17 +548,17 @@ public class Indexer extends Base {
         printStart(proc_name);
         timer_overall.start();
         
-        String buildUpdateType = ConstantsDB.buildUpdateTypeFull;
+        initAllDbTable();
         
-        buildUrl(null); // ok!~
-        updateUrlInitContent(buildUpdateType); // ok!~
-        normalizeRawTitle(buildUpdateType); // ok!~
-        normalizeRawContent(buildUpdateType);
-        updateUrlInitStemTitle(buildUpdateType); // ok!~
-        updateUrlInitStemContent(buildUpdateType); // ok!~
+        buildUrl(); // ok!~
+        updateUrlInitContent(); // ok!~
+        normalizeRawTitle(); // ok!~
+        normalizeRawContent();
+        updateUrlInitStemTitle(); // ok!~
+        updateUrlInitStemContent(); // ok!~
         
-        buildTerm(buildUpdateType); // ok!~
-        buildStem(buildUpdateType); // ok!~
+        buildTerm(); // ok!~
+        buildStem(); // ok!~
         
         buildClearTitleToken(); // ok!~
         buildClearContentToken(); // ok!~
@@ -603,59 +576,106 @@ public class Indexer extends Base {
         timer_overall.printOverallElapseTimeInSecond();
     }
     
-    private void newPageAddedHandling() {
-        ArrayList<String> new_urls = SearchEngine.getNewUrl();
-//        printKVPair("new_urls.size()", new_urls.size());
-//        ArrayUtil.printArrayList(new_urls);
-        
-        String buildUpdateType = ConstantsDB.buildUpdateTypePartial;
-        
-//        buildUrl(new_urls); // ok!~
-//        updateUrlInitContent(buildUpdateType); // ok!~
-//        normalizeRawTitle(buildUpdateType); // ok!~
-//        normalizeRawContent(buildUpdateType); // ok!~
-//        updateUrlInitStemTitle(buildUpdateType); // ok!~
-//        updateUrlInitStemContent(buildUpdateType); // ok!~
-//        
-//        buildTerm(buildUpdateType); // ok!~
-        buildStem(buildUpdateType); // ok!~
-    }
-    
-    private void removedPageHandling() {
-        ArrayList<String> removed_urls = SearchEngine.getRemovedUrl();
-//        printKVPair("removed_urls.size()", removed_urls.size());
-//        ArrayUtil.printArrayList(removed_urls);
-        // removedPageHandling
-    }
-    
-    private void modifiedDateChangeHandling() {
-        // TODO: modifiedDateChangeHandling
-    }
-    
     public void checkAndUpdateIndex() {
         
         proc_name = "checkAndUpdateIndex";
         printStart(proc_name);
         timer_overall.start();
         
-//        SearchEngine.fullRecraw(); // TODO: to be open
+        SearchEngine.fullRecraw();
         
-        // Add to removed page handling
-        newPageAddedHandling();
-        removedPageHandling();
+        ArrayList<String> new_urls = SearchEngine.getNewUrl();
+//      ArrayUtil.printArrayList(new_urls);
         
-        // Modifed date change handling
-        modifiedDateChangeHandling();
+        ArrayList<String> removed_urls = SearchEngine.getRemovedUrl();
+//      ArrayUtil.printArrayList(removed_urls);
+        
+        ArrayList<String> modified_urls = SearchEngine.getModifiedUrl();
+//      ArrayUtil.printArrayList(rmodified_urls);
+        
+        ArrayList<String> changeList = new ArrayList<String>();
+        changeList.addAll(new_urls);
+        changeList.addAll(removed_urls);
+        changeList.addAll(modified_urls);
+        ArrayUtil.printArrayList(changeList);
+        
+        // Rebuild all index if: New Page(s) or Removed Page(s) or Modified Page(s) found
+        try {
+            if(changeList.size()>0) {
+                reBuildAllIndexes();
+                
+                // Update Change History
+                conn = db.getConnection();
+                
+                for(String list: changeList) {
+                    data = new ArrayList<Object>();
+                    StringTokenizer st = new StringTokenizer(list, "|");
+                    while(st.hasMoreTokens()) {
+                        String col = st.nextToken();
+                        data.add(col);
+    //                    System.out.println("["+col+"]");
+                    }
+                    
+                    if(data.size()>0) {
+                        Date d = new Date();
+                        String log_date = DateUtil.getFormattedDate(d);
+                        data.add(0, log_date);
+//                        ArrayUtil.printArrayList(data);
+                        
+                        db.genericInsertUpdateDelete(conn, ConstantsDB.insertHistory, data);
+                        conn.commit();
+                    }
+                }
+                conn.close();
+            } else {
+                printObject("No any kind of update found.");
+                // Do Nothing
+            }
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
         
         timer_overall.stop();
         timer_overall.printOverallElapseTimeInSecond();
     }
     
+    private void initAllDbTable() {
+        try {
+            db = new DBUtil();
+            conn = db.getConnection();
+            
+            db.genericInsertUpdateDelete(conn, ConstantsDB.dropUrl, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.dropTerm, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.dropStem, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.dropRawToken, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.dropStemToken, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.dropMaxTf, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.dropUrlInverted, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.dropUrlForward, null);
+            
+            db.genericInsertUpdateDelete(conn, ConstantsDB.createUrl, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.createTerm, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.createStem, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.createRawToken, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.createStemToken, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.createMaxTf, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.createUrlInverted, null);
+            db.genericInsertUpdateDelete(conn, ConstantsDB.createUrlForward, null);
+            
+            conn.commit();
+            conn.close();
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
     public static void main(String[] args) {
-        Indexer idxr = new Indexer();
+//        Indexer idxr = new Indexer();
+        
+//        idxr.initAllDbTable();
         
 //        idxr.reBuildAllIndexes();
-        idxr.checkAndUpdateIndex();
+//        idxr.checkAndUpdateIndex();
         
         Toolkit.getDefaultToolkit().beep();
     }

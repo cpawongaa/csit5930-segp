@@ -34,23 +34,26 @@ public class DateUtil {
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         
-        try {
+//        try {
         
 //            String date_format = "yyyy-mm-dd hh:mm:ss";
-            SimpleDateFormat format = new SimpleDateFormat(date_format);
-            Date d1 = format.parse("2023-04-19 08:18:20");
+//            SimpleDateFormat format = new SimpleDateFormat(date_format);
+//            Date d1 = format.parse("2023-04-19 08:18:20");
+//            
+//            System.out.println(d1);
+//            System.out.println(getFormattedDate(d1));
+//            
+//            String str_d_1 = "2023-04-29 08:30:20";
+//            String str_d_2 = "2023-04-20 12:12:12";
+//            String str_d_3 = "2023-04-29 08:30:20";
+//            System.out.println(isDateTwoAfterDateOne(str_d_2, str_d_3));
             
-            System.out.println(d1);
-            System.out.println(getFormattedDate(d1));
+            Date d = new Date();
+            System.out.println(getFormattedDate(d));
             
-            String str_d_1 = "2023-04-29 08:30:20";
-            String str_d_2 = "2023-04-20 12:12:12";
-            String str_d_3 = "2023-04-29 08:30:20";
-            System.out.println(isDateTwoAfterDateOne(str_d_2, str_d_3));
-            
-        } catch(ParseException e) {
-            e.printStackTrace();
-        }
+//        } catch(ParseException e) {
+//            e.printStackTrace();
+//        }
 
     }
 
